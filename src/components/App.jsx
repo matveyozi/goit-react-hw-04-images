@@ -1,5 +1,5 @@
 import { Container } from './App.styled';
-import { Component, useState } from 'react';
+import {  useState, useEffect } from 'react';
 import { fetchPictures } from '../services/api'
 
 import { Searchbar } from './Searchbar/Searchbar';
@@ -10,161 +10,68 @@ import { Loader } from './Loader/Loader';
 
 
 
- export function App() {
+export function App() {
   
-   //   state = {
-//     inputPictureName: '',
-//     pictures: [],
-//     page: 1,
-//     selectedPicture: '',
-//     isModalOpen: false,
-//     isLoading: false,
-//     showLoadMoreButton: false,
-//   };
-   
-   const [inputPictureName, setInputPictureName] = useState('')
-   const [pictures, setPictures] = useState([])
-   
-   const getSearchbarInputPictureName = inputText => {
-    this.setState({ inputPictureName: inputText });
-  };
 
-  const getPictures = (pictureName) => {
-    fetchPictures(pictureName)
-    .then(data => {
-      this.setState({ pictures: data.hits})
+   
+      const [inputPictureName, setInputPictureName] = useState('');
+  const [pictures, setPictures] = useState([]);
+  const [page, setPage] = useState(1);
+  const [selectedPicture, setSelectedPicture] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect (() => {
+    if (inputPictureName) {
+      setIsLoading(true);
+      fetchPictures(inputPictureName, page)
+    .then((data) => {
+      setPictures(prevPictures => {
+        return [...prevPictures, ...data.hits];
+      }
+      );
     })
     .catch(error => console.log(error))
-  }
+    .finally(() => {
+      setIsLoading(false);
+    });
+  
+}
+}, [inputPictureName, page]);
 
-  const openModal = link => {
-    this.setState({ selectedPicture: link, isModalOpen: true });
+  const getSearchbarInputPictureName = (inputText) => {
+    setInputPictureName(inputText);
+    setPictures([]);
+    setPage(1);
+  };
+
+  const openModal = (link) => {
+    setSelectedPicture(link);
   };
 
   const closeModal = () => {
-    this.setState({ selectedPicture: '', isModalOpen: false });
+    setSelectedPicture('');
   };
 
-  const onLoadMore = async () => {
-    this.setState({ isLoading: true });
-    const { inputPictureName, pictures, page } = this.state;
-    const nextPage = page + 1;
-    const newPictures = await fetchPictures(inputPictureName, nextPage);
-    this.setState({
-      pictures: [...pictures, ...newPictures.hits],
-      page: nextPage,
-      showLoadMoreButton:
-        newPictures.total > pictures.length + newPictures.hits.length,
-      isLoading: false,
-    });
+  const onLoadMore = () => {
+    setPage(page + 1);
   };
    
    return (
       <Container>
-        <Searchbar onSubmit={this.getSearchbarInputPictureName} />
-        {this.state.pictures.length !== 0 && (
-          <ImageGallery
-          pictures={this.state.pictures}
-          openModal={this.openModal}
-          />
+        <Searchbar onSubmit={getSearchbarInputPictureName} />
+        {pictures.length !== 0 && (
+          <ImageGallery pictures={pictures} openModal={openModal}/>)}
+        {selectedPicture && (
+          <Modal onCloseModal={closeModal} showPicture={selectedPicture}/>
         )}
-        {this.state.selectedPicture && (
-          <Modal onCloseModal={this.closeModal} showPicture={this.state.selectedPicture}/>
-        )}
-        {this.state.pictures.length !== 0 && (
-        <Button
-        handleLoadMore={this.onLoadMore}
-      />
-        )}
-        {this.state.isLoading && (
-          <Loader />
-        )}
+        {pictures.length !== 0 && !isLoading && <Button handleLoadMore={onLoadMore} />}
+        {isLoading && <Loader />}
+     
+        </Container> 
       
-      </Container>
-      
-    );
+   );
+   
    
 }
 
 
-
-
-
-// export class App extends Component {
-//   state = {
-//     inputPictureName: '',
-//     pictures: [],
-//     page: 1,
-//     selectedPicture: '',
-//     isModalOpen: false,
-//     isLoading: false,
-//     showLoadMoreButton: false,
-//   };
-
-//   componentDidUpdate(prevProps, prevState) {
-//     if (this.state.inputPictureName !== prevState.inputPictureName) {
-//       this.getPictures(this.state.inputPictureName);
-//     }
-//   }
-
-//   getSearchbarInputPictureName = inputText => {
-//     this.setState({ inputPictureName: inputText });
-//   };
-
-//   getPictures = (pictureName) => {
-//     fetchPictures(pictureName)
-//     .then(data => {
-//       this.setState({ pictures: data.hits})
-//     })
-//     .catch(error => console.log(error))
-//   }
-
-//   openModal = link => {
-//     this.setState({ selectedPicture: link, isModalOpen: true });
-//   };
-
-//   closeModal = () => {
-//     this.setState({ selectedPicture: '', isModalOpen: false });
-//   };
-
-//   onLoadMore = async () => {
-//     this.setState({ isLoading: true });
-//     const { inputPictureName, pictures, page } = this.state;
-//     const nextPage = page + 1;
-//     const newPictures = await fetchPictures(inputPictureName, nextPage);
-//     this.setState({
-//       pictures: [...pictures, ...newPictures.hits],
-//       page: nextPage,
-//       showLoadMoreButton:
-//         newPictures.total > pictures.length + newPictures.hits.length,
-//       isLoading: false,
-//     });
-//   };
-
-//   render() {
-//     return (
-//       <Container>
-//         <Searchbar onSubmit={this.getSearchbarInputPictureName} />
-//         {this.state.pictures.length !== 0 && (
-//           <ImageGallery
-//           pictures={this.state.pictures}
-//           openModal={this.openModal}
-//           />
-//         )}
-//         {this.state.selectedPicture && (
-//           <Modal onCloseModal={this.closeModal} showPicture={this.state.selectedPicture}/>
-//         )}
-//         {this.state.pictures.length !== 0 && (
-//         <Button
-//         handleLoadMore={this.onLoadMore}
-//       />
-//         )}
-//         {this.state.isLoading && (
-//           <Loader />
-//         )}
-      
-//       </Container>
-      
-//     );
-//   }
-// }
